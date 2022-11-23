@@ -101,7 +101,7 @@ export async function capturePayment(orderId) {
 }
 ```
 
-### Run the App
+### Run this App
 
 You will need to create a `.env` file with the following environment variables:
 
