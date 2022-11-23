@@ -6,7 +6,7 @@
 # PayPal JS Advanced Checkout
 This sample app shows you how to build and customize a card payment form to accept debit and credit cards. Style the card form so that it aligns with your business branding.
 
-To create this application from scratch, follow the [Advanced Checkout itegration](https://developer.paypal.com/docs/checkout/advanced/integrate) guide from the [PayPal Developer](https://developer.paypal.com/home) docs.
+To create this application from scratch, follow the [Advanced Checkout integration](https://developer.paypal.com/docs/checkout/advanced/integrate) guide from the [PayPal Developer](https://developer.paypal.com/home) docs.
 
 ## App.js
 
@@ -81,7 +81,7 @@ export async function createOrder() {
 ```
 
 ### Capture Payment
-The `capturePayment()` function is called on the `onApprove()` callback from the PayPal button once a order has been completed. In this function, you can use the value returned to be store in a database or to do something else with it.
+The `capturePayment()` function is called on the `onApprove()` callback from the PayPal button once an order has been completed. In this function, you can use the value returned to be stored in a database or to do something else with it.
 
 Endpoint: `/api/orders/:orderID/capture`
 
@@ -103,7 +103,7 @@ export async function capturePayment(orderId) {
 
 ### Run the App
 
-You will need to create a `.env` file with the following enviroment variables:
+You will need to create a `.env` file with the following environment variables:
 
 ```shell
 CLIENT_ID=
@@ -111,19 +111,19 @@ APP_SECRET=
 ```
 
 Complete the steps in Get started to get the following sandbox account information from the Developer Dashboard:
-- Sandbox client ID and secret of [a REST app](https://www.paypal.com/signin?returnUri=https%3A%2F%2Fdeveloper.paypal.com%2Fdeveloper%2Fapplications&_ga=1.252581760.841672670.1664266268).
+- Sandbox client ID and the secret of [a REST app](https://www.paypal.com/signin?returnUri=https%3A%2F%2Fdeveloper.paypal.com%2Fdeveloper%2Fapplications&_ga=1.252581760.841672670.1664266268).
 - Access token to use the PayPal REST API server.
 
 ![paypal developer credentials](env.png)
 
-Now, run the follwing command in your terminal:
+Now, run the following command in your terminal:
 
-`npm runs start`
+`npm run start`
 
 and navigate in your browser to: `http://localhost:8888/`.
 
 ## PayPal Developer Community
-The PayPal Developer community helps you build your career, while also improving PayPal products and the developer experience. You’ll be able to contribute code and documentation, meet new people and learn from the open-source community.
+The PayPal Developer community helps you build your career while improving your products and the developer experience. You’ll be able to contribute code and documentation, meet new people and learn from the open-source community.
  
 * Website: [developer.paypal.com](https://developer.paypal.com)
 * Twitter: [@paypaldev](https://twitter.com/paypaldev)
