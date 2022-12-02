@@ -17,7 +17,7 @@
   <hr />
 </div>
 
-# PayPal JS Advanced Checkout
+# PayPal JS FullStack Advanced Checkout
 This sample app shows you how to build and customize a card payment form to accept debit and credit cards. Style the card form so that it aligns with your business branding.
 
 To create this application from scratch, follow the [Advanced Checkout integration](https://developer.paypal.com/docs/checkout/advanced/integrate) guide from the [PayPal Developer](https://developer.paypal.com/home) docs.
