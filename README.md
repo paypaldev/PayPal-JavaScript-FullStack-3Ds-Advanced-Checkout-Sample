@@ -22,7 +22,7 @@ This sample app shows you how to build and customize a card payment form to acce
 
 To create this application from scratch, follow the [Advanced Checkout integration](https://developer.paypal.com/docs/checkout/advanced/integrate) guide from the [PayPal Developer](https://developer.paypal.com/home) docs.
 
-## App.js
+## Public/app.js
 
 ### Create Order
 The `createOrder()` callback allows you to create the request of your order with the following properties from the [V2 orders create call](https://developer.paypal.com/api/orders/v2/#orders-create-request-body): item_total, purchase_units, and more.
@@ -124,7 +124,7 @@ CLIENT_ID=
 APP_SECRET=
 ```
 
-Complete the steps in Get started to get the following sandbox account information from the Developer Dashboard:
+Complete the steps in [Get started](https://developer.paypal.com/api/rest/) to get the following sandbox account information from the Developer Dashboard:
 - Sandbox client ID and the secret of [a REST app](https://www.paypal.com/signin?returnUri=https%3A%2F%2Fdeveloper.paypal.com%2Fdeveloper%2Fapplications&_ga=1.252581760.841672670.1664266268).
 - Access token to use the PayPal REST API server.
 
