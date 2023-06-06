@@ -5,8 +5,7 @@ const FUNDING_SOURCES = [
 ];
 
 FUNDING_SOURCES.forEach((fundingSource) => {
-  paypal
-    .Buttons({
+  paypal.Buttons({
       fundingSource,
       style: {
         layout: "vertical",
@@ -64,52 +63,64 @@ FUNDING_SOURCES.forEach((fundingSource) => {
     .render("#paypal-button-container");
 });
 
-async function onCaptureOrder (orderId) {
-
-  const threedsElement = document.getElementById('threeds');
-  threedsElement.innerHTML = '';
+async function onCaptureOrder(orderId) {
+  const threedsElement = document.getElementById("threeds");
+  threedsElement.innerHTML = "";
 
   try {
     const response = await fetch(`/api/orders/${orderId}/capture`, {
-      method: "post",
+      method: "POST",
     });
-  
-    const orderData = await response.json();
-  
-    const errorDetail = orderData.details?.[0];
-    if (errorDetail) {
-      const description = errorDetail.description ?? "";
-      const debugId = orderData.debug_id ? ` (${orderData.debug_id})` : "";
-      const msg = `Sorry, your transaction could not be processed.\n\n${description}${debugId}`;
-      return alert(msg); // Show a failure message
+
+    const details = await response.json();
+
+    const errorDetail = Array.isArray(details.details) && details.details[0];
+
+    if (errorDetail && errorDetail.issue === "INSTRUMENT_DECLINED") {
+      return actions.restart();
     }
-  } catch(error) {
-    console.log(error);
+
+    if (errorDetail) {
+      let msg = "Sorry, your transaction could not be processed.";
+      msg += errorDetail.description ? " " + errorDetail.description : "";
+      msg += details.debug_id ? " (" + details.debug_id + ")" : "";
+      alert(msg);
+    }
+
+    const transaction = details.purchase_units[0].payments.captures[0];
+    alert(
+      "Transaction " +
+        transaction.status +
+        ": " +
+        transaction.id +
+        ". See console for all available details"
+    );
+  } catch (error) {
+    console.error(error);
   }
-  alert("Transaction completed!");
 }
 
 //Close 3Ds Dialog
 function onClose() {
-  const threedsElement = document.getElementById('threeds');
-  threedsElement.innerHTML = '';
+  const threedsElement = document.getElementById("threeds");
+  threedsElement.innerHTML = "";
 }
 
 //Run 3Ds
 function run3Ds(payload, orderId) {
   const { liabilityShifted } = payload;
 
-  console.log('payload', payload)
+  console.log("payload", payload);
   if (liabilityShifted === true) {
     onCaptureOrder(orderId);
   } else if (liabilityShifted === false || liabilityShifted === undefined) {
-    const forthreeds =`<Dialog open>
+    const forthreeds = `<Dialog open>
         <p>you have the option to complete the payment at your own risk, meaning that the liability of any chargeback has not shifted from the merchant to the card issuer.</p>
         <button onclick=onCaptureOrder("${orderId}")>Pay Now</button>
         <button onclick=onClose()>Close</button>
       </Dialog>
     `;
-    document.getElementById('threeds').innerHTML = forthreeds;
+    document.getElementById("threeds").innerHTML = forthreeds;
   }
 }
 
@@ -156,9 +167,7 @@ if (paypal.HostedFields.isEligible()) {
       },
     },
   }).then((cardFields) => {
-    document
-      .querySelector("#card-form")
-      .addEventListener("submit", async (event) => {
+    document.querySelector("#card-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
           const { value: cardHolderName } = document.getElementById("card-holder-name");
@@ -166,7 +175,7 @@ if (paypal.HostedFields.isEligible()) {
           const { value: countryCodeAlpha2 } = document.getElementById("card-billing-address-country");
 
           const payload = await cardFields.submit({
-            contingencies: ['SCA_ALWAYS'],
+            contingencies: ["SCA_ALWAYS"],
             cardHolderName,
             billingAddress: {
               postalCode,
@@ -175,7 +184,6 @@ if (paypal.HostedFields.isEligible()) {
           });
 
           run3Ds(payload, orderId);
-
         } catch (err) {
           alert("Payment could not be captured! " + JSON.stringify(err));
         }
