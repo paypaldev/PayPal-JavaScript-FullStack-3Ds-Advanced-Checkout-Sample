@@ -9,67 +9,65 @@ FUNDING_SOURCES.forEach((fundingSource) => {
     .Buttons({
       fundingSource,
       style: {
-        layout: 'vertical',
-        shape: 'rect',
-        color: fundingSource === paypal.FUNDING.PAYLATER ? 'gold' : '',
+        layout: "vertical",
+        shape: "rect",
+        color: fundingSource === paypal.FUNDING.PAYLATER ? "gold" : "",
       },
-    createOrder: async (data, actions) => {
-      try {
-        const response = await fetch('/api/orders', {
-          method: 'POST',
-        });
+      createOrder: async (data, actions) => {
+        try {
+          const response = await fetch("/api/orders", {
+            method: "POST",
+          });
 
-        const details = await response.json();
-        return details.id;
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    onApprove: async (data, actions) => {
-      try {
-        const response = await fetch(`/api/orders/${data.orderID}/capture`,
-          {
-            method: 'POST',
+          const details = await response.json();
+          return details.id;
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      onApprove: async (data, actions) => {
+        try {
+          const response = await fetch(`/api/orders/${data.orderID}/capture`, {
+            method: "POST",
+          });
+
+          const details = await response.json();
+          // Three cases to handle:
+          //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
+          //   (2) Other non-recoverable errors -> Show a failure message
+          //   (3) Successful transaction -> Show confirmation or thank you message
+
+          // This example reads a v2/checkout/orders capture response, propagated from the server
+          // You could use a different API or structure for your 'orderData'
+          const errorDetail =
+            Array.isArray(details.details) && details.details[0];
+
+          if (errorDetail && errorDetail.issue === "INSTRUMENT_DECLINED") {
+            return actions.restart();
+            // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
           }
-        );
 
-        const details = await response.json();
-        // Three cases to handle:
-        //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
-        //   (2) Other non-recoverable errors -> Show a failure message
-        //   (3) Successful transaction -> Show confirmation or thank you message
+          if (errorDetail) {
+            let msg = "Sorry, your transaction could not be processed.";
+            msg += errorDetail.description ? " " + errorDetail.description : "";
+            msg += details.debug_id ? " (" + details.debug_id + ")" : "";
+            alert(msg);
+          }
 
-        // This example reads a v2/checkout/orders capture response, propagated from the server
-        // You could use a different API or structure for your 'orderData'
-        const errorDetail =
-          Array.isArray(details.details) && details.details[0];
-
-        if (
-          errorDetail &&
-          errorDetail.issue === 'INSTRUMENT_DECLINED'
-        ) {
-          return actions.restart();
-          // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
+          const transaction = details.purchase_units[0].payments.captures[0];
+          alert(
+            "Transaction " +
+              transaction.status +
+              ": " +
+              transaction.id +
+              "See console for all available details"
+          );
+        } catch (error) {
+          console.error(error);
         }
-
-        if (errorDetail) {
-          let msg = 'Sorry, your transaction could not be processed.';
-          msg += errorDetail.description
-            ? ' ' + errorDetail.description
-            : '';
-          msg += details.debug_id ? ' (' + details.debug_id + ')' : '';
-          alert(msg);
-        }
-
-        const transaction =
-          details.purchase_units[0].payments.captures[0];
-        alert('Transaction ' + transaction.status + ': ' + transaction.id + 'See console for all available details');
-      } catch (error) {
-        console.error(error);
-      }
-    },
-  })
-  .render("#paypal-button-container")
+      },
+    })
+    .render("#paypal-button-container");
 });
 
 // If this returns false or the card fields aren't visible, see Step #1.
@@ -79,10 +77,10 @@ if (paypal.HostedFields.isEligible()) {
   // Renders card fields
   paypal.HostedFields.render({
     // Call your server to set up the transaction
-    createOrder: async(data, actions) => {
+    createOrder: async (data, actions) => {
       try {
-        const response = await fetch('/api/orders', {
-          method: 'POST',
+        const response = await fetch("/api/orders", {
+          method: "POST",
         });
 
         const details = await response.json();
@@ -115,49 +113,47 @@ if (paypal.HostedFields.isEligible()) {
       },
     },
   }).then((cardFields) => {
-    document.querySelector("#card-form").addEventListener("submit", (event) => {
-      event.preventDefault();
-      cardFields
-        .submit({
-          // Cardholder's first and last name
-          cardholderName: document.getElementById("card-holder-name").value,
-          // Billing Address
-          billingAddress: {
-            postalCode: document.getElementById("card-billing-address-zip")
-              .value,
-            countryCodeAlpha2: document.getElementById(
-              "card-billing-address-country"
-            ).value,
-          },
-        })
-        .then(() => {
-          fetch(`/api/orders/${orderId}/capture`, {
+    document
+      .querySelector("#card-form")
+      .addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          const { value: cardHolderName } =
+            document.getElementById("card-holder-name");
+          const { value: postalCode } = document.getElementById(
+            "card-billing-address-zip"
+          );
+          const { value: countryCodeAlpha2 } = document.getElementById(
+            "card-billing-address-country"
+          );
+
+          await cardFields.submit({
+            cardHolderName,
+            billingAddress: {
+              postalCode,
+              countryCodeAlpha2,
+            },
+          });
+
+          const response = await fetch(`/api/orders/${orderId}/capture`, {
             method: "post",
-          })
-            .then((res) => res.json())
-            .then((orderData) => {
-              // Two cases to handle:
-              //   (1) Other non-recoverable errors -> Show a failure message
-              //   (2) Successful transaction -> Show confirmation or thank you
-              // This example reads a v2/checkout/orders capture response, propagated from the server
-              // You could use a different API or structure for your 'orderData'
-              const errorDetail =
-                Array.isArray(orderData.details) && orderData.details[0];
-              if (errorDetail) {
-                var msg = "Sorry, your transaction could not be processed.";
-                if (errorDetail.description)
-                  msg += "\n\n" + errorDetail.description;
-                if (orderData.debug_id) msg += " (" + orderData.debug_id + ")";
-                return alert(msg); // Show a failure message
-              }
-              // Show a success message or redirect
-              alert("Transaction completed!");
-            });
-        })
-        .catch((err) => {
+          });
+          const orderData = await response.json();
+
+          const errorDetail = orderData.details?.[0];
+          if (errorDetail) {
+            const description = errorDetail.description ?? "";
+            const debugId = orderData.debug_id
+              ? ` (${orderData.debug_id})`
+              : "";
+            const msg = `Sorry, your transaction could not be processed.\n\n${description}${debugId}`;
+            return alert(msg); // Show a failure message
+          }
+          alert("Transaction completed!");
+        } catch (err) {
           alert("Payment could not be captured! " + JSON.stringify(err));
-        });
-    });
+        }
+      });
   });
 } else {
   // Hides card fields if the merchant isn't eligible
