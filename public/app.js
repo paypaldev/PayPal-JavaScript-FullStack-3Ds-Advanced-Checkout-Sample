@@ -5,8 +5,7 @@ const FUNDING_SOURCES = [
 ];
 
 FUNDING_SOURCES.forEach((fundingSource) => {
-  paypal
-    .Buttons({
+  paypal.Buttons({
       fundingSource,
       style: {
         layout: "vertical",
@@ -112,8 +111,7 @@ if (paypal.HostedFields.isEligible()) {
       .addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
-          const { value: cardHolderName } =
-            document.getElementById("card-holder-name");
+          const { value: cardHolderName } = document.getElementById("card-holder-name");
           const { value: postalCode } = document.getElementById("card-billing-address-zip");
           const { value: countryCodeAlpha2 } = document.getElementById("card-billing-address-country");
 
