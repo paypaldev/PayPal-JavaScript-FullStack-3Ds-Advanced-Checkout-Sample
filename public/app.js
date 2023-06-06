@@ -55,13 +55,7 @@ FUNDING_SOURCES.forEach((fundingSource) => {
           }
 
           const transaction = details.purchase_units[0].payments.captures[0];
-          alert(
-            "Transaction " +
-              transaction.status +
-              ": " +
-              transaction.id +
-              "See console for all available details"
-          );
+          alert("Transaction " + transaction.status + ": " + transaction.id + "See console for all available details");
         } catch (error) {
           console.error(error);
         }
@@ -120,12 +114,8 @@ if (paypal.HostedFields.isEligible()) {
         try {
           const { value: cardHolderName } =
             document.getElementById("card-holder-name");
-          const { value: postalCode } = document.getElementById(
-            "card-billing-address-zip"
-          );
-          const { value: countryCodeAlpha2 } = document.getElementById(
-            "card-billing-address-country"
-          );
+          const { value: postalCode } = document.getElementById("card-billing-address-zip");
+          const { value: countryCodeAlpha2 } = document.getElementById("card-billing-address-country");
 
           await cardFields.submit({
             cardHolderName,
@@ -138,14 +128,13 @@ if (paypal.HostedFields.isEligible()) {
           const response = await fetch(`/api/orders/${orderId}/capture`, {
             method: "post",
           });
+
           const orderData = await response.json();
 
           const errorDetail = orderData.details?.[0];
           if (errorDetail) {
             const description = errorDetail.description ?? "";
-            const debugId = orderData.debug_id
-              ? ` (${orderData.debug_id})`
-              : "";
+            const debugId = orderData.debug_id ? ` (${orderData.debug_id})` : "";
             const msg = `Sorry, your transaction could not be processed.\n\n${description}${debugId}`;
             return alert(msg); // Show a failure message
           }
