@@ -64,6 +64,55 @@ FUNDING_SOURCES.forEach((fundingSource) => {
     .render("#paypal-button-container");
 });
 
+async function onCaptureOrder (orderId) {
+
+  const threedsElement = document.getElementById('threeds');
+  threedsElement.innerHTML = '';
+
+  try {
+    const response = await fetch(`/api/orders/${orderId}/capture`, {
+      method: "post",
+    });
+  
+    const orderData = await response.json();
+  
+    const errorDetail = orderData.details?.[0];
+    if (errorDetail) {
+      const description = errorDetail.description ?? "";
+      const debugId = orderData.debug_id ? ` (${orderData.debug_id})` : "";
+      const msg = `Sorry, your transaction could not be processed.\n\n${description}${debugId}`;
+      return alert(msg); // Show a failure message
+    }
+  } catch(error) {
+    console.log(error);
+  }
+  alert("Transaction completed!");
+}
+
+//Close 3Ds Dialog
+function onClose() {
+  const threedsElement = document.getElementById('threeds');
+  threedsElement.innerHTML = '';
+}
+
+//Run 3Ds
+function run3Ds(payload, orderId) {
+  const { liabilityShifted } = payload;
+
+  console.log('payload', payload)
+  if (liabilityShifted === true) {
+    onCaptureOrder(orderId);
+  } else if (liabilityShifted === false || liabilityShifted === undefined) {
+    const forthreeds =`<Dialog open>
+        <p>you have the option to complete the payment at your own risk, meaning that the liability of any chargeback has not shifted from the merchant to the card issuer.</p>
+        <button onclick=onCaptureOrder("${orderId}")>Pay Now</button>
+        <button onclick=onClose()>Close</button>
+      </Dialog>
+    `;
+    document.getElementById('threeds').innerHTML = forthreeds;
+  }
+}
+
 // If this returns false or the card fields aren't visible, see Step #1.
 if (paypal.HostedFields.isEligible()) {
   let orderId;
@@ -112,12 +161,12 @@ if (paypal.HostedFields.isEligible()) {
       .addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
-          const { value: cardHolderName } =
-            document.getElementById("card-holder-name");
+          const { value: cardHolderName } = document.getElementById("card-holder-name");
           const { value: postalCode } = document.getElementById("card-billing-address-zip");
           const { value: countryCodeAlpha2 } = document.getElementById("card-billing-address-country");
 
-          await cardFields.submit({
+          const payload = await cardFields.submit({
+            contingencies: ['SCA_ALWAYS'],
             cardHolderName,
             billingAddress: {
               postalCode,
@@ -125,20 +174,8 @@ if (paypal.HostedFields.isEligible()) {
             },
           });
 
-          const response = await fetch(`/api/orders/${orderId}/capture`, {
-            method: "post",
-          });
+          run3Ds(payload, orderId);
 
-          const orderData = await response.json();
-
-          const errorDetail = orderData.details?.[0];
-          if (errorDetail) {
-            const description = errorDetail.description ?? "";
-            const debugId = orderData.debug_id ? ` (${orderData.debug_id})` : "";
-            const msg = `Sorry, your transaction could not be processed.\n\n${description}${debugId}`;
-            return alert(msg); // Show a failure message
-          }
-          alert("Transaction completed!");
         } catch (err) {
           alert("Payment could not be captured! " + JSON.stringify(err));
         }
