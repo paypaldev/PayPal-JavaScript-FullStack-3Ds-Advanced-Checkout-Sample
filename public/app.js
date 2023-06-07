@@ -66,8 +66,8 @@ function onClose() {
   threedsElement.innerHTML = "";
 }
 
-//Run 3Ds
-async function run3Ds(payload, orderId) {
+//Handle 3Ds
+async function onHandle3Ds(payload, orderId) {
   const { liabilityShifted, liabilityShift } = payload;
 
   console.log("payload", payload);
@@ -149,7 +149,7 @@ if (paypal.HostedFields.isEligible()) {
             },
           });
 
-          await run3Ds(payload, orderId);
+          await onHandle3Ds(payload, orderId);
         } catch (error) {
           alert("Payment could not be captured! " + JSON.stringify(error));
         }
