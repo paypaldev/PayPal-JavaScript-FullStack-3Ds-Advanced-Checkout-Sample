@@ -111,7 +111,7 @@ function run3Ds(payload, orderId) {
   const { liabilityShifted } = payload;
 
   console.log("payload", payload);
-  if (liabilityShifted === true) {
+  if (liabilityShift === "POSSIBLE") {
     onCaptureOrder(orderId);
   } else if (liabilityShifted === false || liabilityShifted === undefined) {
     const forthreeds = `<Dialog open>
