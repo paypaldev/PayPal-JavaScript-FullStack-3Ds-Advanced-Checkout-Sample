@@ -2,6 +2,7 @@ const FUNDING_SOURCES = [
   paypal.FUNDING.PAYPAL,
   paypal.FUNDING.PAYLATER,
   paypal.FUNDING.VENMO,
+  paypal.FUNDING.CARD,
 ];
 
 FUNDING_SOURCES.forEach((fundingSource) => {
@@ -12,30 +13,8 @@ FUNDING_SOURCES.forEach((fundingSource) => {
         shape: "rect",
         color: fundingSource === paypal.FUNDING.PAYLATER ? "gold" : "",
       },
-      createOrder: async (data, actions) => {
-        try {
-          const response = await fetch("/api/orders", {
-            method: "POST",
-          });
-
-          const details = await response.json();
-          return details.id;
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      onApprove: async (data, actions) => {
-        try {
-          const response = await fetch(`/api/orders/${data.orderID}/capture`, {
-            method: "POST",
-          });
-
-          const details = await response.json();
-          handleTransactionCases(details);
-        } catch (error) {
-          console.error(error);
-        }
-      },
+      createOrder: async (data, actions) => onCreateOrder(data, actions),
+      onApprove: async (data, actions) => onCaptureOrder (data, actions, null),
     })
     .render("#paypal-button-container");
 });
@@ -66,10 +45,24 @@ function handleTransactionCases(details) {
   alert("Transaction " + transaction.status + ": " + transaction.id + ". See console for all available details");
 }
 
-async function onCaptureOrder(orderId) {
+async function onCreateOrder(data, actions) {
+  try {
+    const response = await fetch("/api/orders", {
+      method: "POST",
+    });
+
+    const details = await response.json();
+    return details.id;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function onCaptureOrder(data, actions, orderID) {
   const threedsElement = document.getElementById("threeds");
   threedsElement.innerHTML = "";
-
+  const orderId = data.orderID || orderID;
+  
   try {
     const response = await fetch(`/api/orders/${orderId}/capture`, {
       method: "POST",
@@ -115,17 +108,8 @@ if (paypal.HostedFields.isEligible()) {
   paypal.HostedFields.render({
     // Call your server to set up the transaction
     createOrder: async (data, actions) => {
-      try {
-        const response = await fetch("/api/orders", {
-          method: "POST",
-        });
-
-        const details = await response.json();
-        orderId = details.id;
-        return orderId;
-      } catch (error) {
-        console.error(error);
-      }
+      orderId = await onCreateOrder(data, actions);
+      console.log("ORDERID", orderId)
     },
     styles: {
       ".valid": {
