@@ -70,7 +70,6 @@ function onClose() {
 async function onHandle3Ds(payload, orderId) {
   const { liabilityShifted, liabilityShift } = payload;
 
-  console.log("payload", payload);
   if (liabilityShift === "POSSIBLE") {
     await onCaptureOrder(null, null, orderId);
   } else if (liabilityShifted === false || liabilityShifted === undefined) {
