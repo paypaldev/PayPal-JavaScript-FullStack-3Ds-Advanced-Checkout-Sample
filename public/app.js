@@ -63,7 +63,7 @@ function handleTransactionCases(details) {
   }
 
   const transaction = details.purchase_units[0].payments.captures[0];
-  alert("Transaction " + transaction.status + ": " + transaction.id + "See console for all available details");
+  alert("Transaction " + transaction.status + ": " + transaction.id + ". See console for all available details");
 }
 
 async function onCaptureOrder(orderId) {
@@ -90,14 +90,16 @@ function onClose() {
 
 //Run 3Ds
 function run3Ds(payload, orderId) {
-  const { liabilityShifted } = payload;
+  const { liabilityShifted, liabilityShift } = payload;
 
   console.log("payload", payload);
   if (liabilityShift === "POSSIBLE") {
     onCaptureOrder(orderId);
   } else if (liabilityShifted === false || liabilityShifted === undefined) {
     document.getElementById("threeds").innerHTML = `<Dialog open>
-        <p>you have the option to complete the payment at your own risk, meaning that the liability of any chargeback has not shifted from the merchant to the card issuer.</p>
+        <p>You have the option to complete the payment at your own risk,
+         meaning that the liability of any chargeback has not shifted from
+          the merchant to the card issuer.</p>
         <button onclick=onCaptureOrder("${orderId}")>Pay Now</button>
         <button onclick=onClose()>Close</button>
       </Dialog>
