@@ -31,30 +31,7 @@ FUNDING_SOURCES.forEach((fundingSource) => {
           });
 
           const details = await response.json();
-          // Three cases to handle:
-          //   (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
-          //   (2) Other non-recoverable errors -> Show a failure message
-          //   (3) Successful transaction -> Show confirmation or thank you message
-
-          // This example reads a v2/checkout/orders capture response, propagated from the server
-          // You could use a different API or structure for your 'orderData'
-          const errorDetail =
-            Array.isArray(details.details) && details.details[0];
-
-          if (errorDetail && errorDetail.issue === "INSTRUMENT_DECLINED") {
-            return actions.restart();
-            // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
-          }
-
-          if (errorDetail) {
-            let msg = "Sorry, your transaction could not be processed.";
-            msg += errorDetail.description ? " " + errorDetail.description : "";
-            msg += details.debug_id ? " (" + details.debug_id + ")" : "";
-            alert(msg);
-          }
-
-          const transaction = details.purchase_units[0].payments.captures[0];
-          alert("Transaction " + transaction.status + ": " + transaction.id + "See console for all available details");
+          handleTransactionCases(details);
         } catch (error) {
           console.error(error);
         }
@@ -62,6 +39,32 @@ FUNDING_SOURCES.forEach((fundingSource) => {
     })
     .render("#paypal-button-container");
 });
+
+function handleTransactionCases(details) {
+  // Three cases to handle:
+  //    (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
+  //    (2) Other non-recoverable errors -> Show a failure message
+  //    (3) Successful transaction -> Show confirmation or thank you message
+
+  // This example reads a v2/checkout/orders capture response, propagated from the server
+  // You could use a different API or structure for your 'orderData'
+  const errorDetail = Array.isArray(details.details) && details.details[0];
+
+  if (errorDetail && errorDetail.issue === "INSTRUMENT_DECLINED") {
+    return actions.restart();
+    // https://developer.paypal.com/docs/checkout/integration-features/funding-failure/
+  }
+
+  if (errorDetail) {
+    let msg = "Sorry, your transaction could not be processed.";
+    msg += errorDetail.description ? " " + errorDetail.description : "";
+    msg += details.debug_id ? " (" + details.debug_id + ")" : "";
+    alert(msg);
+  }
+
+  const transaction = details.purchase_units[0].payments.captures[0];
+  alert("Transaction " + transaction.status + ": " + transaction.id + "See console for all available details");
+}
 
 async function onCaptureOrder(orderId) {
   const threedsElement = document.getElementById("threeds");
@@ -73,28 +76,7 @@ async function onCaptureOrder(orderId) {
     });
 
     const details = await response.json();
-
-    const errorDetail = Array.isArray(details.details) && details.details[0];
-
-    if (errorDetail && errorDetail.issue === "INSTRUMENT_DECLINED") {
-      return actions.restart();
-    }
-
-    if (errorDetail) {
-      let msg = "Sorry, your transaction could not be processed.";
-      msg += errorDetail.description ? " " + errorDetail.description : "";
-      msg += details.debug_id ? " (" + details.debug_id + ")" : "";
-      alert(msg);
-    }
-
-    const transaction = details.purchase_units[0].payments.captures[0];
-    alert(
-      "Transaction " +
-        transaction.status +
-        ": " +
-        transaction.id +
-        ". See console for all available details"
-    );
+    handleTransactionCases(details);
   } catch (error) {
     console.error(error);
   }
@@ -114,13 +96,12 @@ function run3Ds(payload, orderId) {
   if (liabilityShift === "POSSIBLE") {
     onCaptureOrder(orderId);
   } else if (liabilityShifted === false || liabilityShifted === undefined) {
-    const forthreeds = `<Dialog open>
+    document.getElementById("threeds").innerHTML = `<Dialog open>
         <p>you have the option to complete the payment at your own risk, meaning that the liability of any chargeback has not shifted from the merchant to the card issuer.</p>
         <button onclick=onCaptureOrder("${orderId}")>Pay Now</button>
         <button onclick=onClose()>Close</button>
       </Dialog>
     `;
-    document.getElementById("threeds").innerHTML = forthreeds;
   }
 }
 
@@ -175,8 +156,8 @@ if (paypal.HostedFields.isEligible()) {
           const { value: countryCodeAlpha2 } = document.getElementById("card-billing-address-country");
 
           const payload = await cardFields.submit({
-            contingencies: ["SCA_ALWAYS"],
             cardHolderName,
+            contingencies: ["SCA_ALWAYS"],
             billingAddress: {
               postalCode,
               countryCodeAlpha2,
@@ -184,8 +165,8 @@ if (paypal.HostedFields.isEligible()) {
           });
 
           run3Ds(payload, orderId);
-        } catch (err) {
-          alert("Payment could not be captured! " + JSON.stringify(err));
+        } catch (error) {
+          alert("Payment could not be captured! " + JSON.stringify(error));
         }
       });
   });
