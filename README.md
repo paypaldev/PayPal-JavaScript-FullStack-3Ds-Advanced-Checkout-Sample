@@ -50,7 +50,6 @@ and navigate in your browser to: `http://localhost:9597/`.
 
 ### Sample Card
 
-#### Succesful 3Ds Authentification
 Card Type: `Visa`
 
 Card Number: `4032039534213337`
