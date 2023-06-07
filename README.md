@@ -25,6 +25,9 @@ To create this application from scratch, follow the [Advanced Checkout integrati
 
 ### Run this App
 
+You can run this app locally or on [Stackblitz](https://stackblitz.com/edit/pp-js-node?file=README.md).
+
+#### Run it locally
 You will need to create a `.env` file with the following environment variables:
 
 ```shell
