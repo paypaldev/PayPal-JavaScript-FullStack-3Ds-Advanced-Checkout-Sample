@@ -66,7 +66,7 @@ function onClose() {
   threedsElement.innerHTML = "";
 }
 
-//Handle 3Ds
+//Handle 3Ds Payload
 async function onHandle3Ds(payload, orderId) {
   const { liabilityShifted, liabilityShift } = payload;
 
@@ -131,7 +131,7 @@ if (paypal.HostedFields.isEligible()) {
         placeholder: "MM/YY",
       },
     },
-  }).then(async(cardFields) => {
+  }).then((cardFields) => {
     document.querySelector("#card-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
