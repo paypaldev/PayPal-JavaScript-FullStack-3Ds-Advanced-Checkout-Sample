@@ -4,42 +4,6 @@ const FUNDING_SOURCES = [
   paypal.FUNDING.VENMO,
 ];
 
-FUNDING_SOURCES.forEach((fundingSource) => {
-  paypal.Buttons({
-      fundingSource,
-      style: {
-        layout: "vertical",
-        shape: "rect",
-        color: fundingSource === paypal.FUNDING.PAYLATER ? "gold" : "",
-      },
-      createOrder: async (data, actions) => {
-        try {
-          const response = await fetch("/api/orders", {
-            method: "POST",
-          });
-
-          const details = await response.json();
-          return details.id;
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      onApprove: async (data, actions) => {
-        try {
-          const response = await fetch(`/api/orders/${data.orderID}/capture`, {
-            method: "POST",
-          });
-
-          const details = await response.json();
-          handleTransactionCases(details);
-        } catch (error) {
-          console.error(error);
-        }
-      },
-    })
-    .render("#paypal-button-container");
-});
-
 function handleTransactionCases(details) {
   // Three cases to handle:
   //    (1) Recoverable INSTRUMENT_DECLINED -> call actions.restart()
@@ -66,10 +30,24 @@ function handleTransactionCases(details) {
   alert("Transaction " + transaction.status + ": " + transaction.id + ". See console for all available details");
 }
 
-async function onCaptureOrder(orderId) {
+async function onCreateOrder(data, actions) {
+  try {
+    const response = await fetch("/api/orders", {
+      method: "POST",
+    });
+
+    const details = await response.json();
+    return details.id;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function onCaptureOrder(data, actions, orderID) {
   const threedsElement = document.getElementById("threeds");
   threedsElement.innerHTML = "";
-
+  const orderId = data ? data.orderID : orderID;
+  
   try {
     const response = await fetch(`/api/orders/${orderId}/capture`, {
       method: "POST",
@@ -89,23 +67,37 @@ function onClose() {
 }
 
 //Run 3Ds
-function run3Ds(payload, orderId) {
+async function run3Ds(payload, orderId) {
   const { liabilityShifted, liabilityShift } = payload;
 
   console.log("payload", payload);
   if (liabilityShift === "POSSIBLE") {
-    onCaptureOrder(orderId);
+    await onCaptureOrder(null, null, orderId);
   } else if (liabilityShifted === false || liabilityShifted === undefined) {
     document.getElementById("threeds").innerHTML = `<Dialog open>
         <p>You have the option to complete the payment at your own risk,
          meaning that the liability of any chargeback has not shifted from
           the merchant to the card issuer.</p>
-        <button onclick=onCaptureOrder("${orderId}")>Pay Now</button>
+        <button onclick=onCaptureOrder(${null},${null},"${orderId}")>Pay Now</button>
         <button onclick=onClose()>Close</button>
       </Dialog>
     `;
   }
 }
+
+FUNDING_SOURCES.forEach((fundingSource) => {
+  paypal.Buttons({
+      fundingSource,
+      style: {
+        layout: "vertical",
+        shape: "rect",
+        color: fundingSource === paypal.FUNDING.PAYLATER ? "gold" : "",
+      },
+      createOrder: async (data, actions) => onCreateOrder(data, actions),
+      onApprove: async (data, actions) => onCaptureOrder (data, actions, null),
+    })
+    .render("#paypal-button-container");
+});
 
 // If this returns false or the card fields aren't visible, see Step #1.
 if (paypal.HostedFields.isEligible()) {
@@ -115,17 +107,8 @@ if (paypal.HostedFields.isEligible()) {
   paypal.HostedFields.render({
     // Call your server to set up the transaction
     createOrder: async (data, actions) => {
-      try {
-        const response = await fetch("/api/orders", {
-          method: "POST",
-        });
-
-        const details = await response.json();
-        orderId = details.id;
-        return orderId;
-      } catch (error) {
-        console.error(error);
-      }
+      orderId = await onCreateOrder(data, actions);
+      return orderId;
     },
     styles: {
       ".valid": {
@@ -149,7 +132,7 @@ if (paypal.HostedFields.isEligible()) {
         placeholder: "MM/YY",
       },
     },
-  }).then((cardFields) => {
+  }).then(async(cardFields) => {
     document.querySelector("#card-form").addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
@@ -166,7 +149,7 @@ if (paypal.HostedFields.isEligible()) {
             },
           });
 
-          run3Ds(payload, orderId);
+          await run3Ds(payload, orderId);
         } catch (error) {
           alert("Payment could not be captured! " + JSON.stringify(error));
         }
