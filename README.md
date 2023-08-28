@@ -23,19 +23,18 @@ This sample app shows you how to build and customize a card payment form to acce
 To create this application from scratch, follow the [Advanced Checkout integration](https://developer.paypal.com/docs/checkout/advanced/integrate) guide from the [PayPal Developer](https://developer.paypal.com/home) docs.
 
 
-### Run this App
+## Run this project
 
-You can run this app locally or on [Stackblitz](https://stackblitz.com/edit/pp-js-node?file=README.md).
+### PayPal Codespaces
+[![Open Code In GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/paypaldev/PayPal-JavaScript-FullStack-Standard-Checkout-Sample?devcontainer_path=.devcontainer%2Fdevcontainer.json)
 
-#### Run it locally
-You will need to create a `.env` file with the following environment variables:
+- Rename the ``.env.example`` file to `.env`.
+- Add your enviroment variables in the `.env` file.
 
-```shell
-CLIENT_ID=
-APP_SECRET=
-```
-In the `checkout.ejs` replace the `YOUR_CLIENT_ID` string in the  `script` tag with your PayPal Client ID.
+### Locally
 
+- Rename the ``.env.example`` file to `.env`.
+- Add your enviroment variables in the `.env` file.
 
 Complete the steps in [Get started](https://developer.paypal.com/api/rest/) to get the following sandbox account information from the Developer Dashboard:
 - Sandbox client ID and the secret of [a REST app](https://www.paypal.com/signin?returnUri=https%3A%2F%2Fdeveloper.paypal.com%2Fdeveloper%2Fapplications&_ga=1.252581760.841672670.1664266268).
@@ -47,9 +46,7 @@ Now, run the following commands in your terminal:
 
 `npm install`
 
-`npm run start`
-
-and navigate in your browser to: `http://localhost:9597/`.
+`npm start` and navigate to [http://localhost:8888/](http://localhost:8888/).
 
 ### Sample Card
 
