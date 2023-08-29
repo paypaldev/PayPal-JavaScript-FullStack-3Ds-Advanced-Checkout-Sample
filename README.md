@@ -33,7 +33,7 @@ To create this application from scratch, follow the [Advanced Checkout integrati
 
 ### Locally
 
-- Rename the ``.env.example`` file to `.env`.
+- Rename the `.env.example` file to `.env`.
 - Add your environment variables in the `.env` file.
 
 Complete the steps in [Get started](https://developer.paypal.com/api/rest/) to get the following sandbox account information from the Developer Dashboard:
