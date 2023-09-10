@@ -1,4 +1,29 @@
+//Close 3Ds Dialog
+function onClose() {
+  const threedsElement = document.getElementById("threeds");
+  threedsElement.innerHTML = "";
+}
+
+//Handle 3Ds Payload
+async function onHandle3Ds(payload, orderId) {
+  const { liabilityShifted, liabilityShift } = payload;
+
+  if (liabilityShift === "POSSIBLE") {
+    await onApproveCallback(orderId);
+  } else if (liabilityShifted === false || liabilityShifted === undefined) {
+    document.getElementById("threeds").innerHTML = `<Dialog open>
+        <p>You have the option to complete the payment at your own risk,
+         meaning that the liability of any chargeback has not shifted from
+          the merchant to the card issuer.</p>
+        <button onclick=onApproveCallback("${orderId}")>Pay Now</button>
+        <button onclick=onClose()>Close</button>
+      </Dialog>
+    `;
+  }
+}
+
 async function createOrderCallback() {
+  resultMessage("")
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -35,9 +60,14 @@ async function createOrderCallback() {
     }
   }
   
-  async function onApproveCallback(data, actions) {
+  async function onApproveCallback(orderId) {
+    console.log('orderId', orderId);
+    
+    const threedsElement = document.getElementById("threeds");
+    threedsElement.innerHTML = "";
+
     try {
-      const response = await fetch(`/api/orders/${data.orderID}/capture`, {
+      const response = await fetch(`/api/orders/${orderId}/capture`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +129,7 @@ async function createOrderCallback() {
   window.paypal
     .Buttons({
       createOrder: createOrderCallback,
-      onApprove: onApproveCallback,
+      onApprove: (data)=> onApproveCallback(data.orderID),
     })
     .render("#paypal-button-container");
   
@@ -111,10 +141,14 @@ async function createOrderCallback() {
   
   // If this returns false or the card fields aren't visible, see Step #1.
   if (window.paypal.HostedFields.isEligible()) {
+    let orderId;
     // Renders card fields
     window.paypal.HostedFields.render({
       // Call your server to set up the transaction
-      createOrder: createOrderCallback,
+      createOrder: async (data, actions) => {
+        orderId = await createOrderCallback(data, actions);
+        return orderId;
+      },
       styles: {
         ".valid": {
           color: "green",
@@ -138,49 +172,37 @@ async function createOrderCallback() {
         },
       },
     }).then((cardFields) => {
-      document.querySelector("#card-form").addEventListener("submit", (event) => {
-        event.preventDefault();
-        cardFields
-          .submit({
-            // Cardholder's first and last name
-            cardholderName: document.getElementById("card-holder-name").value,
-            // Billing Address
-            billingAddress: {
-              // Street address, line 1
-              streetAddress: document.getElementById(
-                "card-billing-address-street",
-              ).value,
-              // Street address, line 2 (Ex: Unit, Apartment, etc.)
-              extendedAddress: document.getElementById(
-                "card-billing-address-unit",
-              ).value,
-              // State
-              region: document.getElementById("card-billing-address-state").value,
-              // City
-              locality: document.getElementById("card-billing-address-city")
-                .value,
-              // Postal Code
-              postalCode: document.getElementById("card-billing-address-zip")
-                .value,
-              // Country Code
-              countryCodeAlpha2: document.getElementById(
-                "card-billing-address-country",
-              ).value,
-            },
-          })
-          .then((data) => {
-            return onApproveCallback(data);
-          })
-          .catch((orderData) => {
-            resultMessage(
-              `Sorry, your transaction could not be processed...<br><br>${JSON.stringify(
-                orderData,
-              )}`,
-            );
-          });
-      });
-    });
-  } else {
-    // Hides card fields if the merchant isn't eligible
-    document.querySelector("#card-form").style = "display: none";
-  }
+        document.querySelector("#card-form").addEventListener("submit", async (event) => {
+          event.preventDefault();
+          try {
+            const { value: cardHolderName } = document.getElementById("card-holder-name");
+            const { value: streetAddress } = document.getElementById("card-billing-address-street");
+            const { value: extendedAddress } = document.getElementById("card-billing-address-unit");
+            const { value: region } = document.getElementById("card-billing-address-state");
+            const { value: locality } = document.getElementById("card-billing-address-city");
+            const { value: postalCode } = document.getElementById("card-billing-address-zip");
+            const { value: countryCodeAlpha2 } = document.getElementById("card-billing-address-country");
+  
+            const payload = await cardFields.submit({
+              cardHolderName,
+              contingencies: ["SCA_ALWAYS"],
+              billingAddress: {
+                streetAddress,
+                extendedAddress,
+                region,
+                locality,
+                postalCode,
+                countryCodeAlpha2,
+              },
+            });
+  
+            await onHandle3Ds(payload, orderId);
+          } catch (error) {
+            alert("Payment could not be captured! " + JSON.stringify(error));
+          }
+        });
+    }); 
+} else {
+  // Hides card fields if the merchant isn't eligible
+  document.querySelector("#card-form").style = "display: none";
+}
