@@ -32,7 +32,7 @@ To create this application from scratch, follow the [Advanced Checkout integrati
 ```shell
 PAYPAL_CLIENT_ID=YOUR_CLIENT_ID
 PAYPAL_
-
+```
 ### Locally
 
 - Rename the `.env.example` file to `.env`.
